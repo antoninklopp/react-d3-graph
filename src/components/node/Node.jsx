@@ -100,8 +100,15 @@ export default class Node extends React.Component {
             node = null;
 
         if (this.props.svg || this.props.viewGenerator) {
-            const height = size / 10;
-            const width = size / 10;
+            var height = 0;
+            var width = 0;
+            if (this.props.type == CONST.SYMBOLS.CIRCLE) {
+                height = Math.sqrt(size / Math.PI) * 2;
+                width = Math.sqrt(size / Math.PI) * 2;
+            } else {
+                height = size / 10;
+                width = size / 10;
+            }
             const tx = width / 2;
             const ty = height / 2;
             const transform = `translate(${tx},${ty})`;
