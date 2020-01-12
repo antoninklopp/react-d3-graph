@@ -16,9 +16,11 @@ import {
     checkForGraphElementsChanges,
     getCenterAndZoomTransformation,
     initializeGraphState,
+    getInitializeTransformValues,
 } from "./graph.helper";
 import { renderGraph } from "./graph.renderer";
 import { merge, throwErr } from "../../utils";
+import { Transform } from "stream";
 
 /**
  * Graph component is the main component for react-d3-graph components, its interface allows its user
@@ -278,6 +280,21 @@ export default class Graph extends React.Component {
      */
     _zoomConfig = () => {
         d3Select(`#${this.state.id}-${CONST.GRAPH_WRAPPER_ID}`)
+            .call(() => {
+                const { k, x, y } = getInitializeTransformValues(
+                    this.state.config.minZoom,
+                    this.state.config.maxZoom,
+                    this.props.initialScale,
+                    this.props.initialXPos,
+                    this.props.initialZPos
+                );
+
+                d3SelectAll(`#${this.state.id}-${CONST.GRAPH_CONTAINER_ID}`).attr(
+                    "transform",
+                    `translate(${x}, ${y}) scale(${k})`
+                );
+                this.setState({ initialTransform: { x: x, y: y, k: k } });
+            })
             .call(
                 d3Zoom()
                     .scaleExtent([this.state.config.minZoom, this.state.config.maxZoom])
@@ -292,6 +309,18 @@ export default class Graph extends React.Component {
      */
     _zoomed = () => {
         const transform = d3Event.transform;
+
+        console.log(d3SelectAll(`#${this.state.id}-${CONST.GRAPH_CONTAINER_ID}`).attr("transform"));
+        console.log(transform);
+        if (
+            d3SelectAll(`#${this.state.id}-${CONST.GRAPH_CONTAINER_ID}`).attr("transform") ==
+            `translate(${this.state.initialTransform.x}, ${this.state.initialTransform.y}) ` +
+                `scale(${this.state.initialTransform.k})`
+        ) {
+            transform.k *= this.state.initialTransform.k;
+            transform.x += this.state.initialTransform.x;
+            transform.y += this.state.initialTransform.y;
+        }
 
         d3SelectAll(`#${this.state.id}-${CONST.GRAPH_CONTAINER_ID}`).attr("transform", transform);
 

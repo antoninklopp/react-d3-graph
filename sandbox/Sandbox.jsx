@@ -376,6 +376,9 @@ export default class Sandbox extends React.Component {
             onMouseOverLink: this.onMouseOverLink,
             onMouseOutLink: this.onMouseOutLink,
             onNodePositionChange: this.onNodePositionChange,
+            initialScale: 1,
+            initialXPos: 20,
+            initialYPos: 20,
         };
 
         if (this.state.fullscreen) {

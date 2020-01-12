@@ -451,6 +451,30 @@ function updateNodeHighlightedValue(nodes, links, config, id, value = false) {
     };
 }
 
+/**
+ * Get initial scale and position values
+ *
+ * @param {number} minZoom min zoom from the config
+ * @param {number} maxZoom max zoom from the config
+ * @param {number} k initial scale (default 1)
+ * @param {number} x initial x position (default 0)
+ * @param {number} y initial y position (default 0)
+ * @returns {Object} returns an object containing the checked scale and position values
+ */
+function getInitializeTransformValues(minZoom, maxZoom, k, x, y) {
+    k = k ? k : 1;
+    x = x ? x : 0;
+    y = y ? y : 0;
+
+    if (k < minZoom) {
+        k = minZoom;
+    } else if (k > maxZoom) {
+        k = maxZoom;
+    }
+
+    return { k, x, y };
+}
+
 export {
     checkForGraphConfigChanges,
     checkForGraphElementsChanges,
@@ -458,4 +482,5 @@ export {
     getId,
     initializeGraphState,
     updateNodeHighlightedValue,
+    getInitializeTransformValues,
 };
