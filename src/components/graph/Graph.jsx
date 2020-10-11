@@ -17,6 +17,7 @@ import {
   getCenterAndZoomTransformation,
   initializeGraphState,
   initializeNodes,
+  checkBoundaries,
 } from "./graph.helper";
 import { renderGraph } from "./graph.renderer";
 import { merge, debounce, throwErr } from "../../utils";
@@ -235,14 +236,26 @@ export default class Graph extends React.Component {
       draggedNode.oldX = draggedNode.x;
       draggedNode.oldY = draggedNode.y;
 
-      draggedNode.x += d3Event.dx;
-      draggedNode.y += d3Event.dy;
+      const newX = draggedNode.x + d3Event.dx;
+      const newY = draggedNode.y + d3Event.dy;
 
-      // set nodes fixing coords fx and fy
-      draggedNode["fx"] = draggedNode.x;
-      draggedNode["fy"] = draggedNode.y;
+      console.log(newX, newY, this.state.transform, this.state.config.width, this.state.config.height);
 
-      this._tick({ draggedNode });
+      if (
+        newX > -this.state.transform.x * (1 / this.state.transform.k) &&
+        newX < this.state.config.width - this.state.transform.x * (1 / this.state.transform.k) &&
+        newY > -this.state.transform.y * (1 / this.state.transform.k) &&
+        newY < this.state.config.height - this.state.transform.y * (1 / this.state.transform.k)
+      ) {
+        draggedNode.x = newX;
+        draggedNode.y = newY;
+
+        // set nodes fixing coords fx and fy
+        draggedNode["fx"] = draggedNode.x;
+        draggedNode["fy"] = draggedNode.y;
+
+        this._tick({ draggedNode });
+      }
     }
   };
 
@@ -308,9 +321,13 @@ export default class Graph extends React.Component {
   _zoomed = () => {
     const transform = d3Event.transform;
 
+    if (!checkBoundaries(this.state.config.width, this.state.config.height, this.state.nodes, transform)) {
+      return;
+    }
+
     d3SelectAll(`#${this.state.id}-${CONST.GRAPH_CONTAINER_ID}`).attr("transform", transform);
 
-    this.state.config.panAndZoom && this.setState({ transform: transform.k });
+    this.state.config.panAndZoom && this.setState({ transform: transform });
 
     // only send zoom change events if the zoom has changed (_zoomed() also gets called when panning)
     if (this.debouncedOnZoomChange && this.state.previousZoom !== transform.k) {
@@ -543,7 +560,7 @@ export default class Graph extends React.Component {
     // in order to properly update graph data we need to pause eventual d3 ongoing animations
     newGraphElements && this.pauseSimulation();
 
-    const transform = newConfig.panAndZoom !== this.state.config.panAndZoom ? 1 : this.state.transform;
+    const transform = this.state.transform;
     const focusedNodeId = nextProps.data.focusedNodeId;
     const d3FocusedNode = this.state.d3Nodes.find(node => `${node.id}` === `${focusedNodeId}`);
     const focusTransformation = getCenterAndZoomTransformation(d3FocusedNode, this.state.config);
@@ -618,6 +635,7 @@ export default class Graph extends React.Component {
   }
 
   render() {
+    console.log(this.state.transform);
     const { nodes, links, defs } = renderGraph(
       this.state.nodes,
       {
@@ -638,7 +656,7 @@ export default class Graph extends React.Component {
       this.state.config,
       this.state.highlightedNode,
       this.state.highlightedLink,
-      this.state.transform
+      this.state.transform.k || 1
     );
 
     const svgStyle = {

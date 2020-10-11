@@ -417,7 +417,7 @@ function initializeGraphState({ data, id, config }, state) {
     simulation,
     newGraphElements: false,
     configUpdated: false,
-    transform: 1,
+    transform: { x: 0, y: 0, k: 1 },
     draggedNode: null,
   };
 }
@@ -553,6 +553,42 @@ function getNormalizedNodeCoordinates(
   return { sourceCoords: { x: x1, y: y1 }, targetCoords: { x: x2, y: y2 } };
 }
 
+function checkBoundaries(width, height, nodes, transform) {
+  let minPosition = { x: 100000, y: 100000 };
+  let maxPosition = { x: -100000, y: -100000 };
+
+  for (const node of Object.values(nodes)) {
+    if (node.x > maxPosition.x) {
+      maxPosition.x = node.x;
+    }
+    if (node.y > maxPosition.y) {
+      maxPosition.y = node.y;
+    }
+    if (node.x < minPosition.x) {
+      minPosition.x = node.x;
+    }
+    if (node.y < minPosition.y) {
+      minPosition.y = node.y;
+    }
+  }
+
+  console.log(transform, minPosition, maxPosition);
+
+  if ((transform.x * 1) / transform.k + minPosition.x < 0) {
+    return false;
+  }
+  if ((transform.y * 1) / transform.k + minPosition.y < 0) {
+    return false;
+  }
+  if ((transform.x * 1) / transform.k + maxPosition.x > width) {
+    return false;
+  }
+  if ((transform.y * 1) / transform.k + maxPosition.y > height) {
+    return false;
+  }
+  return true;
+}
+
 export {
   checkForGraphConfigChanges,
   checkForGraphElementsChanges,
@@ -562,4 +598,5 @@ export {
   updateNodeHighlightedValue,
   getNormalizedNodeCoordinates,
   initializeNodes,
+  checkBoundaries,
 };
